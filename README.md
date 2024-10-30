@@ -67,6 +67,10 @@ $ cast --help
 
 ### SyncSwap工具
 
+这个工具仅用于linea链，如果要在其他链上用，请修改factory和router的值
+1. 将router修改为SyncSwap Router V2的地址
+2. 将stableFactory修改为SyncSwap Pool Master的地址
+
 SyncSwap在uniswap v2上面做了魔改，为了能够*不去修改已有代码🌚*实现了这个wrapper，仅仅包括自用的一些函数
 
 1. factory的allPairsLength和allPairs函数

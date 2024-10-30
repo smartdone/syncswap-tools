@@ -66,12 +66,22 @@ contract SyncSwapTools {
     }
 
     // fetches and sorts the reserves for a pair
-    // function getReserves(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB) {
-    //     (address token0,) = sortTokens(tokenA, tokenB);
-    //     pairFor(factory, tokenA, tokenB);
-    //     (uint reserve0, uint reserve1,) = IPancakePair(pairFor(factory, tokenA, tokenB)).getReserves();
-    //     (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
-    // }
+    function getReserves(address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB) {
+        Ipool pool = Ipool(getPair(tokenA, tokenB));
+        (uint reserve0, uint reserve1) = pool.getReserves();
+        address token0 = pool.token0();
+        (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
+    }
+
+    function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts) {
+        require(path.length >= 2, 'PancakeLibrary: INVALID_PATH');
+        amounts = new uint[](path.length);
+        amounts[0] = amountIn;
+        for (uint i; i < path.length - 1; i++) {
+            Ipool pool = Ipool(getPair(path[i], path[i+1]));
+            amounts[i + 1] = pool.getAmountOut(path[i], amounts[i], address(this));
+        }
+    }
 
 
 }
