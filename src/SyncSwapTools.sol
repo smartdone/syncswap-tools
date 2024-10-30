@@ -124,7 +124,7 @@ contract SyncSwapTools {
         }
     }
 
-    function getSwapParams(address[] memory path, uint amountIn) public view returns (IRouter.SwapPath memory) {
+    function getSwapParams(address[] memory path, uint amountIn, address to) public view returns (IRouter.SwapPath memory) {
         IRouter.SwapPath memory swapPath;
         swapPath.tokenIn = path[0];
         swapPath.amountIn = amountIn;
@@ -137,7 +137,7 @@ contract SyncSwapTools {
                 pool: pair,
                 // data是几个参数encode的，第一个参数为tokenIn,第二参数为tokenTo，第三个参数为mode
                 // mode为0的话，就不会withdraw，mode为1的话，会withdraw
-                data: abi.encode(path[i], address(this), 0),
+                data: abi.encode(path[i], to, 2),
                 callback: address(0),
                 callbackData: bytes(''),
                 useVault: false

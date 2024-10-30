@@ -5,6 +5,28 @@ import "forge-std/Test.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "../src/SyncSwapTools.sol";
 
+interface IVault {
+    function wETH() external view returns (address);
+
+    function reserves(address token) external view returns (uint reserve);
+
+    function balanceOf(address token, address owner) external view returns (uint balance);
+
+    function deposit(address token, address to) external payable returns (uint amount);
+
+    function depositETH(address to) external payable returns (uint amount);
+
+    function transferAndDeposit(address token, address to, uint amount) external payable returns (uint);
+
+    function transfer(address token, address to, uint amount) external;
+
+    function withdraw(address token, address to, uint amount) external;
+
+    function withdrawAlternative(address token, address to, uint amount, uint8 mode) external;
+
+    function withdrawETH(address to, uint amount) external;
+}
+
 contract SyncSwapTest is Test {
     SyncSwapTools tools;
     IERC20 public weth;
@@ -12,7 +34,7 @@ contract SyncSwapTest is Test {
     function setUp() public {
         tools = new SyncSwapTools();
         weth = IERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
-        usdt = IERC20(0x1Bf74C010E6320bab11e2e5A532b5AC15e0b8aA6);
+        usdt = IERC20(0x176211869cA2b568f2A7D4EE941E073a821EE1ff);
     }
 
     function testPairs() public view {
@@ -77,11 +99,29 @@ contract SyncSwapTest is Test {
 
         uint[] memory outs = tools.getAmountsOut(amountIn, path);
         console.log("AmountsOut: %d", outs[outs.length - 1]);
-        IRouter.SwapPath memory swapPath = tools.getSwapParams(path, amountIn);
+        IRouter.SwapPath memory swapPath = tools.getSwapParams(path, amountIn, address(tools));
         IRouter.SwapPath[] memory swapPaths = new IRouter.SwapPath[](1);        
         swapPaths[0] = swapPath;
 
-        tools.swap(swapPaths, outs[outs.length - 1], block.timestamp + 1000);
+        Ipool.TokenAmount memory xout = tools.swap(swapPaths, outs[outs.length - 1], block.timestamp + 1000);
+        
+        // weth.approve(address(0xC2a1947d2336b2AF74d5813dC9cA6E0c3b3E8a1E), amountIn);
+        // Ipool.TokenAmount memory xout = IRouter(0xC2a1947d2336b2AF74d5813dC9cA6E0c3b3E8a1E).swap(swapPaths, outs[outs.length - 1], block.timestamp + 1000);
+        console.log("Amount Out Token: %s", xout.token);
+        console.log("Amount Out Value: %d", xout.amount);
+
+        IVault vault = IVault(0x7160570BB153Edd0Ea1775EC2b2Ac9b65F1aB61B);
+        uint256 b = vault.balanceOf(address(usdt), address(this));
+        console.log("vault Balance of usdt: %d", b);
+
+        console.log("tools usdt balance: %d", usdt.balanceOf(address(tools)));
+        console.log("tools weth balance: %d", weth.balanceOf(address(tools)));
+        console.log("this usdt balance: %d", usdt.balanceOf(address(this)));
+        console.log("this weth balance: %d", weth.balanceOf(address(this)));
+
+        console.log("tool address: %s", address(tools));
+        console.log("this address: %s", address(this));
+
     }
 
 }
