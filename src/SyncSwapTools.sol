@@ -68,6 +68,7 @@ contract SyncSwapTools {
     address public owner;
     address constant router = 0xC2a1947d2336b2AF74d5813dC9cA6E0c3b3E8a1E;
     IPoolFactory constant stableFactory = IPoolFactory(0xeE8790cE315c0871ec612f0A6EbB5471A955b3A0);
+    address weth = 0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f;
     constructor() {
         owner = msg.sender;
     }
@@ -124,38 +125,53 @@ contract SyncSwapTools {
         }
     }
 
-    function getSwapParams(address[] memory path, uint amountIn, address to) public view returns (IRouter.SwapPath memory) {
-        IRouter.SwapPath memory swapPath;
-        swapPath.tokenIn = path[0];
-        swapPath.amountIn = amountIn;
-        swapPath.steps = new IRouter.SwapStep[](path.length - 1);
-        for (uint i; i < path.length - 1; i++) {
-            address pair = getPair(path[i], path[i + 1]);
-            Ipool pool = Ipool(pair);
-            uint amountOut = pool.getAmountOut(path[i], amountIn, address(this));
-            swapPath.steps[i] =  IRouter.SwapStep({
-                pool: pair,
-                // data是几个参数encode的，第一个参数为tokenIn,第二参数为tokenTo，第三个参数为mode
-                // mode为0的话，就不会withdraw，mode为1的话，会withdraw
-                data: abi.encode(path[i], to, 2),
-                callback: address(0),
-                callbackData: bytes(''),
-                useVault: false
-            });
-            amountIn = amountOut;
-        }
-        return swapPath;
-    }
+    // function getSwapParams(address[] memory path, uint amountIn, address to) public view returns (IRouter.SwapPath[] memory) {
+    //     require(path.length >= 2, 'INVALID_PATH');
+    //     IRouter.SwapPath[] memory swapPaths = new IRouter.SwapPath[](path.length - 1);
+    //     for (uint i; i < path.length - 1; i++) {
+    //         IRouter.SwapPath memory swapPath;
+    //         swapPath.tokenIn = path[0];
+    //         swapPath.amountIn = amountIn;
+    //         swapPath.steps = new IRouter.SwapStep[](1);
+    //         address pair = getPair(path[i], path[i + 1]);
+    //         Ipool pool = Ipool(pair);
+    //         uint amountOut = pool.getAmountOut(path[i], amountIn, address(this));
 
-    // 先调用getSwapParams生成参数，再调用这个函数去交换，资产放到合约里面
-    function swap(
-        IRouter.SwapPath[] memory paths,
-        uint amountOutMin,
-        uint deadline
-    ) external payable onlyOwner returns (Ipool.TokenAmount memory amountOut) {
-        IERC20 tokenIn = IERC20(paths[0].tokenIn);
-        tokenIn.approve(router, paths[0].amountIn);
-        amountOut = IRouter(router).swap(paths, amountOutMin, deadline);
-    }
+    //         if (pool.token0() == weth || pool.token1() == weth){
+    //             swapPath.steps[i] =  IRouter.SwapStep({
+    //                 pool: pair,
+    //                 // data是几个参数encode的，第一个参数为tokenIn,第二参数为tokenTo，第三个参数为mode
+    //                 data: abi.encode(path[i], to, 2),
+    //                 callback: address(0),
+    //                 callbackData: bytes(''),
+    //                 useVault: false
+    //             });
+    //         } else {
+    //             swapPath.steps[i] =  IRouter.SwapStep({
+    //                 pool: pair,
+    //                 // data是几个参数encode的，第一个参数为tokenIn,第二参数为tokenTo，第三个参数为mode
+    //                 data: abi.encode(path[i], to, 0),
+    //                 callback: address(0),
+    //                 callbackData: bytes(''),
+    //                 useVault: false
+    //             });
+    //         }
+            
+    //         amountIn = amountOut;
+    //         swapPaths[i] = swapPath;
+    //     }
+    //     return swapPaths;
+    // }
+
+    // // 先调用getSwapParams生成参数，再调用这个函数去交换，资产放到合约里面
+    // function swap(
+    //     IRouter.SwapPath[] memory paths,
+    //     uint amountOutMin,
+    //     uint deadline
+    // ) external payable onlyOwner returns (Ipool.TokenAmount memory amountOut) {
+    //     IERC20 tokenIn = IERC20(paths[0].tokenIn);
+    //     tokenIn.approve(router, paths[0].amountIn);
+    //     amountOut = IRouter(router).swap(paths, amountOutMin, deadline);
+    // }
 
 }

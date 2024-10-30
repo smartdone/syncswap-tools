@@ -79,50 +79,52 @@ contract SyncSwapTest is Test {
         }
     }
 
-    function testSwap() public {
-        // 不使用native token，这样就不用deposit了，可以预先deposit
-        address[] memory path = new address[](2);
-        path[0] = address(weth);
-        path[1] = address(usdt);
+    // function testSwap() public {
+    //     // 不使用native token，这样就不用deposit了，可以预先deposit
+    //     address[] memory path = new address[](3);
+    //     path[0] = address(weth);
+    //     path[1] = address(usdt);
+    //     path[2] = address(0x716744B8657A98F8E46E0219e68C6b9c52EDBd29);
         
-        // deposit weth
-        uint bal = address(this).balance;
-        uint amountIn = 1000000000000000000;
-        require(bal >= amountIn, "Insufficient balance");
-        bytes memory data = abi.encodeWithSignature("deposit()");
-        (bool success,) = address(weth).call{value: amountIn}(data);
-        console.log("Deposit: %d", amountIn);
-        require(success, "Deposit failed");
-        weth.transfer(address(tools), amountIn);
+    //     // deposit weth
+    //     uint bal = address(this).balance;
+    //     uint amountIn = 10000000000000000;
+    //     require(bal >= amountIn, "Insufficient balance");
+    //     bytes memory data = abi.encodeWithSignature("deposit()");
+    //     (bool success,) = address(weth).call{value: amountIn}(data);
+    //     console.log("Deposit: %d", amountIn);
+    //     require(success, "Deposit failed");
+    //     weth.transfer(address(tools), amountIn);
 
-        console.log("tools weth balance: %d", weth.balanceOf(address(tools)));
+    //     console.log("tools weth balance: %d", weth.balanceOf(address(tools)));
 
-        uint[] memory outs = tools.getAmountsOut(amountIn, path);
-        console.log("AmountsOut: %d", outs[outs.length - 1]);
-        IRouter.SwapPath memory swapPath = tools.getSwapParams(path, amountIn, address(tools));
-        IRouter.SwapPath[] memory swapPaths = new IRouter.SwapPath[](1);        
-        swapPaths[0] = swapPath;
+    //     uint[] memory outs = tools.getAmountsOut(amountIn, path);
+    //     for(uint i = 0; i < outs.length; i++) {
+    //         console.log("AmountsOut[%d]: %d", i, outs[i]);
+    //     }
+    //     // console.log("AmountsOut: %d", outs[outs.length - 1]);
+    //     IRouter.SwapPath[] memory swapPath = tools.getSwapParams(path, amountIn, address(tools));
 
-        Ipool.TokenAmount memory xout = tools.swap(swapPaths, outs[outs.length - 1], block.timestamp + 1000);
+    //     // Ipool.TokenAmount memory xout = tools.swap(swapPaths, outs[outs.length - 1], block.timestamp + 1000);
         
-        // weth.approve(address(0xC2a1947d2336b2AF74d5813dC9cA6E0c3b3E8a1E), amountIn);
-        // Ipool.TokenAmount memory xout = IRouter(0xC2a1947d2336b2AF74d5813dC9cA6E0c3b3E8a1E).swap(swapPaths, outs[outs.length - 1], block.timestamp + 1000);
-        console.log("Amount Out Token: %s", xout.token);
-        console.log("Amount Out Value: %d", xout.amount);
+    //     // // weth.approve(address(0xC2a1947d2336b2AF74d5813dC9cA6E0c3b3E8a1E), amountIn);
+    //     // // Ipool.TokenAmount memory xout = IRouter(0xC2a1947d2336b2AF74d5813dC9cA6E0c3b3E8a1E).swap(swapPaths, outs[outs.length - 1], block.timestamp + 1000);
+    //     // console.log("Amount Out Token: %s", xout.token);
+    //     // console.log("Amount Out Value: %d", xout.amount);
 
-        IVault vault = IVault(0x7160570BB153Edd0Ea1775EC2b2Ac9b65F1aB61B);
-        uint256 b = vault.balanceOf(address(usdt), address(this));
-        console.log("vault Balance of usdt: %d", b);
+    //     // IVault vault = IVault(0x7160570BB153Edd0Ea1775EC2b2Ac9b65F1aB61B);
+    //     // uint256 b = vault.balanceOf(address(usdt), address(this));
+    //     // console.log("vault Balance of usdt: %d", b);
 
-        console.log("tools usdt balance: %d", usdt.balanceOf(address(tools)));
-        console.log("tools weth balance: %d", weth.balanceOf(address(tools)));
-        console.log("this usdt balance: %d", usdt.balanceOf(address(this)));
-        console.log("this weth balance: %d", weth.balanceOf(address(this)));
+    //     // console.log("tools usdt balance: %d", usdt.balanceOf(address(tools)));
+    //     // console.log("tools weth balance: %d", weth.balanceOf(address(tools)));
+    //     // console.log("this usdt balance: %d", usdt.balanceOf(address(this)));
+    //     // console.log("this weth balance: %d", weth.balanceOf(address(this)));
 
-        console.log("tool address: %s", address(tools));
-        console.log("this address: %s", address(this));
+    //     // console.log("tool address: %s", address(tools));
+    //     // console.log("this address: %s", address(this));
 
-    }
+    // }
 
 }
 
