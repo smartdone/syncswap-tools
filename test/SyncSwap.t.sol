@@ -7,8 +7,12 @@ import "../src/SyncSwapTools.sol";
 
 contract SyncSwapTest is Test {
     SyncSwapTools tools;
+    IERC20 public weth;
+    IERC20 public usdt;
     function setUp() public {
         tools = new SyncSwapTools();
+        weth = IERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
+        usdt = IERC20(0x1Bf74C010E6320bab11e2e5A532b5AC15e0b8aA6);
     }
 
     function testPairs() public view {
@@ -52,7 +56,34 @@ contract SyncSwapTest is Test {
             console.log("AmountOut[%d]: %d", i, amountOuts2[i]);
         }
     }
-    
+
+    function testSwap() public {
+        // 不使用native token，这样就不用deposit了，可以预先deposit
+        address[] memory path = new address[](2);
+        path[0] = address(weth);
+        path[1] = address(usdt);
+        
+        // deposit weth
+        uint bal = address(this).balance;
+        uint amountIn = 1000000000000000000;
+        require(bal >= amountIn, "Insufficient balance");
+        bytes memory data = abi.encodeWithSignature("deposit()");
+        (bool success,) = address(weth).call{value: amountIn}(data);
+        console.log("Deposit: %d", amountIn);
+        require(success, "Deposit failed");
+        weth.transfer(address(tools), amountIn);
+
+        console.log("tools weth balance: %d", weth.balanceOf(address(tools)));
+
+        uint[] memory outs = tools.getAmountsOut(amountIn, path);
+        console.log("AmountsOut: %d", outs[outs.length - 1]);
+        IRouter.SwapPath memory swapPath = tools.getSwapParams(path, amountIn);
+        IRouter.SwapPath[] memory swapPaths = new IRouter.SwapPath[](1);        
+        swapPaths[0] = swapPath;
+
+        tools.swap(swapPaths, outs[outs.length - 1], block.timestamp + 1000);
+    }
+
 }
 
 // forge test --match-contract SyncSwapTest --fork-url http://192.168.1.4:17002 -vvv

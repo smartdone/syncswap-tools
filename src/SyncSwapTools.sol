@@ -3,6 +3,43 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
+
+interface IRouter {
+    struct SwapStep {
+        address pool;
+        bytes data;
+        address callback;
+        bytes callbackData;
+        bool useVault;
+    }
+
+    struct SwapPath {
+        SwapStep[] steps;
+        address tokenIn;
+        uint amountIn;
+    }
+
+    struct SplitPermitParams {
+        address token;
+        uint approveAmount;
+        uint deadline;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
+    struct ArrayPermitParams {
+        uint approveAmount;
+        uint deadline;
+        bytes signature;
+    }
+    function swap(
+        SwapPath[] memory paths,
+        uint amountOutMin,
+        uint deadline
+    ) external payable returns (Ipool.TokenAmount memory amountOut);
+}
+
 interface IPoolFactory {
 
     function pools(uint index) external view returns (address);
@@ -11,6 +48,10 @@ interface IPoolFactory {
 }
 
 interface Ipool {
+    struct TokenAmount {
+        address token;
+        uint amount;
+    }
     function token0() external view returns (address);
     function token1() external view returns (address);
 
@@ -83,5 +124,38 @@ contract SyncSwapTools {
         }
     }
 
+    function getSwapParams(address[] memory path, uint amountIn) public view returns (IRouter.SwapPath memory) {
+        IRouter.SwapPath memory swapPath;
+        swapPath.tokenIn = path[0];
+        swapPath.amountIn = amountIn;
+        swapPath.steps = new IRouter.SwapStep[](path.length - 1);
+        for (uint i; i < path.length - 1; i++) {
+            address pair = getPair(path[i], path[i + 1]);
+            Ipool pool = Ipool(pair);
+            uint amountOut = pool.getAmountOut(path[i], amountIn, address(this));
+            swapPath.steps[i] =  IRouter.SwapStep({
+                pool: pair,
+                // data是几个参数encode的，第一个参数为tokenIn,第二参数为tokenTo，第三个参数为mode
+                // mode为0的话，就不会withdraw，mode为1的话，会withdraw
+                data: abi.encode(path[i], address(this), 0),
+                callback: address(0),
+                callbackData: bytes(''),
+                useVault: false
+            });
+            amountIn = amountOut;
+        }
+        return swapPath;
+    }
+
+    // 先调用getSwapParams生成参数，再调用这个函数去交换，资产放到合约里面
+    function swap(
+        IRouter.SwapPath[] memory paths,
+        uint amountOutMin,
+        uint deadline
+    ) external payable onlyOwner returns (Ipool.TokenAmount memory amountOut) {
+        IERC20 tokenIn = IERC20(paths[0].tokenIn);
+        tokenIn.approve(router, paths[0].amountIn);
+        amountOut = IRouter(router).swap(paths, amountOutMin, deadline);
+    }
 
 }
