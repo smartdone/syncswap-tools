@@ -74,7 +74,7 @@ contract SyncSwapTools {
     }
 
     function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts) {
-        require(path.length >= 2, 'PancakeLibrary: INVALID_PATH');
+        require(path.length >= 2, 'INVALID_PATH');
         amounts = new uint[](path.length);
         amounts[0] = amountIn;
         for (uint i; i < path.length - 1; i++) {
