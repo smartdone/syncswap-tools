@@ -64,3 +64,11 @@ $ forge --help
 $ anvil --help
 $ cast --help
 ```
+
+### SyncSwap工具
+
+SyncSwap在uniswap v2上面做了魔改，为了能够*不去修改已有代码🌚*实现了这个wrapper，仅仅包括自用的一些函数
+
+1. factory的allPairsLength和allPairs函数
+2. getPair通过两个token去获取地址
+3. getAmountsOut，通过amountIn以及paths去获取amountOut，用来询价
